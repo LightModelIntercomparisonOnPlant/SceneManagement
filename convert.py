@@ -6,39 +6,35 @@ from functools import reduce
 
 import pygltflib
 
-def shape_mesh(pgl_shape, tesselator=None):
+def shape_mesh(pgl_object, tesselator=None):
     if tesselator is None:
         tesselator = pgl.Tesselator()
-    tesselator.process(pgl_shape)
-    tset = tesselator.result
-    return list(tset.pointList), list(tset.indexList)
+    pgl_object.apply(tesselator)
+    mesh = tesselator.triangulation
+    if mesh:
+        indices = list(map(tuple,mesh.indexList))
+        pts = list(map(tuple,mesh.pointList))
+    return pts, indices
 
 
 def as_scene_mesh(pgl_scene):
     """ Transform a PlantGL scene / PlantGL shape dict to a scene_mesh"""
     tesselator = pgl.Tesselator()
 
-    if isinstance(pgl_scene, pgl.Scene):
-        sm = {}
+    sm = {}
 
-        def _concat_mesh(mesh1,mesh2):
-            v1, f1 = mesh1
-            v2, f2 = mesh2
-            v = numpy.array(v1.tolist() + v2.tolist())
-            offset = len(v1)
-            f = numpy.array(f1.tolist() + [[i + offset, j + offset, k + offset] for i, j, k
-                               in f2.tolist()])
-            return v, f
+    def _concat_mesh(mesh1,mesh2):
+        v1, f1 = mesh1
+        v2, f2 = mesh2
+        v = v1 + v2
+        offset = len(v1)
+        f = f1 + [[i + offset, j + offset, k + offset] for i, j, k in f2]
+        return v, f
 
-        for pid, pgl_objects in pgl_scene.todict().items():
-            sm[pid] = reduce(_concat_mesh, [shape_mesh(pgl_object, tesselator) for pgl_object in
-                           pgl_objects])
-        return sm
-    elif isinstance(pgl_scene, dict):
-        return {sh_id: shape_mesh(sh,tesselator) for sh_id, sh in
-                pgl_scene.iteritems()}
-    else:
-        return pgl_scene
+    for pid, pgl_objects in pgl_scene.todict().items():
+        sm[pid] = reduce(_concat_mesh, [shape_mesh(pgl_object, tesselator) for pgl_object in
+                       pgl_objects])
+    return sm
 
 def to_mesh(shape):
 
