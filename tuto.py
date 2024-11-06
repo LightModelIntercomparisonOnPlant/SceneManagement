@@ -1,8 +1,8 @@
 from openalea.plantgl.all import *
 from convert import *
 
-f1 = "leaf.geom"
-f2 = "tree.geom"
+f1 = "models/leaf.geom"
+f2 = "models/tree.geom"
 
 s1 = Scene(f1)
 s2 = Scene(f2)
