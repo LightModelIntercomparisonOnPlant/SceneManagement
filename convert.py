@@ -46,7 +46,7 @@ def to_mesh(shape):
     triangles = np.array(triangles, dtype=np.uint8)
     return points, triangles
 
-def to_pgl(file): # return a pgl scene
+def to_pgl(file, verbose=False): # return a pgl scene
     gltf = pygltflib.GLTF2().load(file)
     scene = pgl.Scene()
     for mesh in gltf.meshes:
@@ -59,7 +59,8 @@ def to_pgl(file): # return a pgl scene
                 buffer_view = gltf.bufferViews[accessor.bufferView]
                 buffer = gltf.buffers[buffer_view.buffer]
                 data = gltf.get_data_from_buffer_uri(buffer.uri)
-                print(primitive.indices)
+                if verbose:
+                    print(primitive.indices)
 
                 # pull each vertex from the binary buffer and convert it into a tuple of python floats
                 for i in range(accessor.count):
@@ -68,7 +69,8 @@ def to_pgl(file): # return a pgl scene
                     v = struct.unpack("<fff", d)   # convert from base64 to three floats
                     vertices.append(v)
 
-                    print(i, v)
+                    if verbose:
+                        print(i, v)
 
                 # triangles
                 accessor_triangles = gltf.accessors[primitive.indices]
@@ -81,8 +83,8 @@ def to_pgl(file): # return a pgl scene
                     d = data[index:index+3]  # the index data
                     v = struct.unpack("<BBB", d)
                     indices.append(v)
-                    print(i, v)
-
+                    if verbose:
+                        print(i, v)
             ts = pgl.TriangleSet(vertices, indices)
             sh = pgl.Shape(ts)
             scene.add(sh)
