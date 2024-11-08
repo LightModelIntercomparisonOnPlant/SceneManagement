@@ -1,0 +1,53 @@
+{
+   "Description":"some text to describe the model",
+   "Plant Architecture":[
+      "large_tree.gltf",
+      "plant2.gltf"
+   ],
+   "Background":[
+      "soil.gltf"
+   ],
+   "Sensor":[
+      "sensors.gltf"
+   ],
+   "Scale":[
+      "scale_plant1.csv",
+      "scale_plant2.csv"
+   ],
+   "Spectral_Band":{
+      "PAR":[
+         400,
+         700
+      ]
+   },
+   "Spectral_Properties":{
+      "materials":{
+         "PAR":{
+            "soil":"Lambertian 0.2",
+            "leaf":"Lambertian 0.2 0.01",
+            "complex_leaf":{
+               "File":"complex_leaf_scatering_indicatrix_PAR.bsdf"
+            }
+         }
+      },
+      "mapping":[
+         "spectral_plant1.csv",
+         "spectral_plant2.csv",
+         "spectral_soil.csv"
+      ]
+   },
+   "Illumination":{
+      "sky":{
+         "PAR":"clear_sky_Montpellier_21_06.csv"
+      },
+      "light":{
+         "PAR":"some_artificial_light.ies"
+      }
+   },
+   "Measurements":{
+      "PAR":{
+         "top":"PAR_measurements.csv"
+      }
+   }
+}
+  

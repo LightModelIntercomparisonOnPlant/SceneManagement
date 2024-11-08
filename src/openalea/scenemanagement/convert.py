@@ -1,12 +1,11 @@
-import numpy as np
 import struct
 import base64
-
 from math import atan2, sqrt, pi
-from openalea.plantgl import all as pgl
 from functools import reduce
 
+import numpy as np
 import pygltflib
+from openalea.plantgl import all as pgl
 
 
 def shape_mesh(pgl_object, tesselator=None):
@@ -17,6 +16,9 @@ def shape_mesh(pgl_object, tesselator=None):
     if mesh:
         indices = list(map(tuple, mesh.indexList))
         pts = list(map(tuple, mesh.pointList))
+    else:
+        indices = []
+        pts = []
     return pts, indices
 
 
@@ -48,70 +50,98 @@ def to_mesh(shape):
     triangles = np.array(triangles, dtype=np.uint8)
     return points, triangles
 
+
 def unpack_string(component_type):
+    """Returns the appropriate unpack string and size
+    depending on the component type of a gltf buffer.
+
+    Args:
+        component_type (int): The type of component of the buffer.
+
+    Returns:
+        tuple: a tuple containing the unpack string and the size.
+    """
+    string = ""
+    size = 0
     match component_type:
-        case 5120: # signed char
-            return "<bbb", 1
-        case 5121: # unsigned char
-            return "<BBB", 1
-        case 5122: # signed short
-            return "<hhh", 2
-        case 5123: # unsigned short
-            return "<HHH", 2
-        case 5125: # unsigned int
-            return "<III", 4
-        case 5126: # float (signed)
-            return "<fff", 4 
-        case _:
-            return "", 0
+        case 5120:  # signed char
+            string = "<bbb"
+            size = 1
+        case 5121:  # unsigned char
+            string = "<BBB"
+            size = 1
+        case 5122:  # signed short
+            string = "<hhh"
+            size = 2
+        case 5123:  # unsigned short
+            string = "<HHH"
+            size = 2
+        case 5125:  # unsigned int
+            string = "<III"
+            size = 4
+        case 5126:  # float (signed)
+            string = "<fff"
+            size = 4
+    return string, size
+
 
 def to_pgl(file, verbose=False) -> pgl.Scene:
+    """convert a gltf file to a plantGL scene.
+
+    Args:
+        file (str): the path to the gltf file.
+        verbose (bool, optional): verbose mode. Defaults to False.
+
+    Returns:
+        pgl.Scene: A plantGL scenes
+    """
     gltf = pygltflib.GLTF2().load(file)
     scene = pgl.Scene()
     for mesh in gltf.meshes:
         vertices = []
         indices = []
         for primitive in mesh.primitives:
-
             # get the binary data for this mesh primitive from the buffer
             accessor = gltf.accessors[primitive.attributes.POSITION]
             buffer_view = gltf.bufferViews[accessor.bufferView]
             buffer = gltf.buffers[buffer_view.buffer]
             try:
                 data = gltf.get_data_from_buffer_uri(buffer.uri)
-            except IndexError: # File saved with different mime type than in pygltflib
+            except IndexError:  # File saved with different mime type than in pygltflib
                 data = buffer.uri.split("data:application/gltf-buffer;base64,")[1]
                 data = base64.decodebytes(bytes(data, "utf8"))
-            if verbose:
-                print(primitive.indices)
 
             # pull each vertex from the binary buffer and convert it into a tuple of python floats
             for i in range(accessor.count):
-                compType = accessor.componentType
-                string, size = unpack_string(compType)
-                index = buffer_view.byteOffset + accessor.byteOffset + i*size*3  # the location in the buffer of this vertex
-                d = data[index:index+size*3]  # the vertex data
-                v = struct.unpack(string, d)   # convert from base64 to three floats
+                comp_type = accessor.componentType
+                string, size = unpack_string(comp_type)
+                index = (
+                    buffer_view.byteOffset + accessor.byteOffset + i * size * 3
+                )  # the location in the buffer of this vertex
+                d = data[index : index + size * 3]  # the vertex data
+                v = struct.unpack(string, d)  # convert from base64 to three floats
                 vertices.append(v)
 
                 if verbose:
                     print(i, v)
 
             # triangles
-            accessor_triangles = gltf.accessors[primitive.indices]
-            buffer_view = gltf.bufferViews[accessor_triangles.bufferView]
-            buffer = gltf.buffers[buffer_view.buffer]                
+            accessor = gltf.accessors[primitive.indices]
+            buffer_view = gltf.bufferViews[accessor.bufferView]
+            buffer = gltf.buffers[buffer_view.buffer]
             try:
                 data = gltf.get_data_from_buffer_uri(buffer.uri)
-            except IndexError: # File saved with different mime type than in pygltflib
+            except IndexError:  # File saved with different mime type than in pygltflib
                 data = buffer.uri.split("data:application/gltf-buffer;base64,")[1]
                 data = base64.decodebytes(bytes(data, "utf8"))
             # pull each vertex from the binary buffer and convert it into a tuple of python floats
-            for i in range(int(accessor_triangles.count / 3)):
-                compType = accessor_triangles.componentType
-                string, size = unpack_string(compType)
-                index = buffer_view.byteOffset + accessor_triangles.byteOffset + i * size*3 # the location in the buffer of this triangle
-                d = data[index:index+size*3]  # the index data
+            for i in range(int(accessor.count / 3)):
+                comp_type = accessor.componentType
+                string, size = unpack_string(comp_type)
+                index = (
+                    buffer_view.byteOffset + accessor.byteOffset + i * size * 3
+                )  # the location in the buffer of this triangle
+                d = data[index : index + size * 3]  # the index data
                 v = struct.unpack(string, d)
                 indices.append(v)
                 if verbose:
@@ -123,31 +153,36 @@ def to_pgl(file, verbose=False) -> pgl.Scene:
         if node.mesh is not None:
             if node.translation is not None:
                 translation = pgl.Vector3(node.translation)
-                scene[node.mesh] = pgl.Shape(pgl.Translated(translation,scene[node.mesh].geometry))
+                scene[node.mesh] = pgl.Shape(
+                    pgl.Translated(translation, scene[node.mesh].geometry)
+                )
             if node.scale is not None:
                 scale = pgl.Vector3(node.scale)
-                print(scale)
-                scene[node.mesh] = pgl.Shape(pgl.Scaled(scale, scene[node.mesh].geometry))
+                scene[node.mesh] = pgl.Shape(
+                    pgl.Scaled(scale, scene[node.mesh].geometry)
+                )
             if node.rotation is not None:
-                rotation = node.rotation # Quaternion
+                rotation = node.rotation  # Quaternion
                 x = rotation[0]
                 y = rotation[1]
                 z = rotation[2]
                 w = rotation[3]
 
-                sinr_cosp = 2*(w*x+y*z)
-                cosr_cosp = 1 - 2 * (x*x+y*y)
+                sinr_cosp = 2 * (w * x + y * z)
+                cosr_cosp = 1 - 2 * (x * x + y * y)
                 roll = atan2(sinr_cosp, cosr_cosp)
 
-                sinp = sqrt(1+2*(w*y-x*z))
-                cosp = sqrt(1-2 * (w*y-x*z))
-                pitch = 2*atan2(sinp, cosp) - pi/2
+                sinp = sqrt(1 + 2 * (w * y - x * z))
+                cosp = sqrt(1 - 2 * (w * y - x * z))
+                pitch = 2 * atan2(sinp, cosp) - pi / 2
 
-                siny_cosp = 2*(w*z+x*y)
-                cosy_cosp = 1-2*(y*y+z*z)
+                siny_cosp = 2 * (w * z + x * y)
+                cosy_cosp = 1 - 2 * (y * y + z * z)
                 yaw = atan2(siny_cosp, cosy_cosp)
 
-                scene[node.mesh] = pgl.Shape(pgl.EulerRotated(roll,pitch,yaw, scene[node.mesh].geometry))
+                scene[node.mesh] = pgl.Shape(
+                    pgl.EulerRotated(roll, pitch, yaw, scene[node.mesh].geometry)
+                )
     return scene
 
 
@@ -215,13 +250,11 @@ def to_gltf_file(gltf, filename="toto.gltf"):
 class GLTFScene:
     def __init__(self, scene):
         self.scene = scene
-
-        self._bufferViews = []
+        self._buffer_views = []
         self._accessors = []
         self._primitives = []
         self._meshes = []
         self._nodes = []
-
         self._blobs = []
         self._current_size = 0
 
@@ -229,7 +262,7 @@ class GLTFScene:
         uids = 0
         self._current_size = 0
         objs = self.scene.todict()
-        for vid, shapes in objs.items():
+        for _, shapes in objs.items():
             for sh in shapes:
                 points, triangles = to_mesh(sh)
                 self.populate(points, triangles, uids)
@@ -249,7 +282,7 @@ class GLTFScene:
             nodes=self._nodes,
             meshes=self._meshes,
             accessors=self._accessors,
-            bufferViews=self._bufferViews,
+            bufferViews=self._buffer_views,
             buffers=[buffer],
         )
 
@@ -308,8 +341,8 @@ class GLTFScene:
         self._primitives.append(primitive)
         self._accessors.append(triangle_access)
         self._accessors.append(points_access)
-        self._bufferViews.append(triangle_buffer_view)
-        self._bufferViews.append(array_buffer_view)
+        self._buffer_views.append(triangle_buffer_view)
+        self._buffer_views.append(array_buffer_view)
 
         self._blobs.append(triangles_binary_blob + points_binary_blob)
         self._current_size += len(triangles_binary_blob) + len(points_binary_blob)
