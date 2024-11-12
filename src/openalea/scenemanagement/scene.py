@@ -1,16 +1,19 @@
-import json
+from pathlib import Path
+
 import numpy as np
 import openalea.plantgl.all as pgl
+
 from openalea.scenemanagement.convert import to_pgl
+from openalea.scenemanagement.project import Project
 from oawidgets.plantgl import PlantGL
 from alinea.caribu.CaribuScene import CaribuScene
 
 
 class Scene:
-    def __init__(self, file):
-        self.file = file
+    def __init__(self, file: Path):
+        self.file: Path = Path(file)
         self.sc = pgl.Scene()
-        self.desc = None
+        self.project = None
         self.spec_prop = None
         self.light_sources = None
         self.environment = None
@@ -28,15 +31,11 @@ class Scene:
 
     def _parse_scene_file(self):
         """Parse the scene file and initialize all parameters."""
-        with open(self.file, encoding="UTF8") as f:
-            self.desc = json.load(f)
-        plants = self.desc["Plant Architecture"]
-        for plant in plants:
+        self.project = Project(self.file)
+        for plant in self.project.plant_architecture:
             self.read_gltf(plant)
-        backgrounds = self.desc["Background"]
-        for background in backgrounds:
+        for background in self.project.background:
             self.read_gltf(background)
-        self.spec_prop = self.desc["Spectral_Properties"]
 
     def run(self):
         """Run caribu on the scene with the previous scene information

@@ -1,13 +1,13 @@
 {
    "Description":"some text to describe the model",
-   "Plant Architecture":[
+   "Plant_Architecture":[
       "large_tree.gltf",
       "plant2.gltf"
    ],
    "Background":[
       "soil.gltf"
    ],
-   "Sensor":[
+   "Sensors":[
       "sensors.gltf"
    ],
    "Scale":[

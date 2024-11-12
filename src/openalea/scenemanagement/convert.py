@@ -150,17 +150,13 @@ def to_pgl(file, verbose=False) -> pgl.Scene:
         sh = pgl.Shape(ts)
         scene.add(sh)
     for node in gltf.nodes:
+        # if node.matrix is not None:
+            # TODO: transform mesh.
         if node.mesh is not None:
-            if node.translation is not None:
-                translation = pgl.Vector3(node.translation)
-                scene[node.mesh] = pgl.Shape(
-                    pgl.Translated(translation, scene[node.mesh].geometry)
-                )
-            if node.scale is not None:
-                scale = pgl.Vector3(node.scale)
-                scene[node.mesh] = pgl.Shape(
-                    pgl.Scaled(scale, scene[node.mesh].geometry)
-                )
+            if node.matrix is not None:
+                # TODO: transform mesh.
+                print(node.matrix)
+                scene[node.mesh] = scene[node.mesh].transform(node.matrix)
             if node.rotation is not None:
                 rotation = node.rotation  # Quaternion
                 x = rotation[0]
@@ -183,6 +179,19 @@ def to_pgl(file, verbose=False) -> pgl.Scene:
                 scene[node.mesh] = pgl.Shape(
                     pgl.EulerRotated(roll, pitch, yaw, scene[node.mesh].geometry)
                 )
+
+            if node.scale is not None:
+                scale = pgl.Vector3(node.scale)
+                scene[node.mesh] = pgl.Shape(
+                    pgl.Scaled(scale, scene[node.mesh].geometry)
+                )
+            if node.translation is not None:
+                translation = pgl.Vector3(node.translation[0], node.translation[1], 
+                node.translation[2])
+                scene[node.mesh] = pgl.Shape(
+                    pgl.Translated(translation, scene[node.mesh].geometry)
+                )
+            
     return scene
 
 
