@@ -7,8 +7,8 @@ from pathlib import Path
 
 @dataclass
 class Project:
-    """Class containing all data for a light simulation project.
-    """
+    """Class containing all data for a light simulation project."""
+
     description: str = ""
     plant_architecture: list[str] = None
     background: list[str] = None

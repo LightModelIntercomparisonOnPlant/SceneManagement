@@ -151,7 +151,7 @@ def to_pgl(file, verbose=False) -> pgl.Scene:
         scene.add(sh)
     for node in gltf.nodes:
         # if node.matrix is not None:
-            # TODO: transform mesh.
+        # TODO: transform mesh.
         if node.mesh is not None:
             if node.matrix is not None:
                 # TODO: transform mesh.
@@ -186,12 +186,11 @@ def to_pgl(file, verbose=False) -> pgl.Scene:
                     pgl.Scaled(scale, scene[node.mesh].geometry)
                 )
             if node.translation is not None:
-                translation = pgl.Vector3(node.translation[0], node.translation[1], 
-                node.translation[2])
+                translation = pgl.Vector3(node.translation)
                 scene[node.mesh] = pgl.Shape(
                     pgl.Translated(translation, scene[node.mesh].geometry)
                 )
-            
+
     return scene
 
 
