@@ -149,15 +149,16 @@ def to_pgl(file, verbose=False) -> pgl.Scene:
         ts = pgl.TriangleSet(vertices, indices)
         sh = pgl.Shape(ts)
         scene.add(sh)
+
+    matrix = np.zeros((4,4))
+    transform_all(gltf.nodes[0], matrix, scene, gltf)
     for node in gltf.nodes:
-        # if node.matrix is not None:
-        # TODO: transform mesh.
         if node.mesh is not None:
             if node.matrix is not None:
                 # TODO: transform mesh.
                 print(node.matrix)
                 scene[node.mesh] = scene[node.mesh].transform(node.matrix)
-            if node.rotation is not None:
+            if node.rotation:
                 rotation = node.rotation  # Quaternion
                 x = rotation[0]
                 y = rotation[1]
@@ -192,6 +193,23 @@ def to_pgl(file, verbose=False) -> pgl.Scene:
                 )
 
     return scene
+
+def transform_all(node, matrix, scene, gltf):
+    if node.matrix is not None:
+        matrix += np.array(node.matrix).reshape(4,4)
+
+    if node.mesh is not None and np.count_nonzero(matrix) > 0 :
+        vertices = scene[node.mesh].geometry.pointList
+        for i in range(len(vertices)):
+            vertex = vertices[i]
+            homogeneous_point = np.array([vertex[0], vertex[1], vertex[2], 1])
+
+            transformed_point = np.dot(matrix, homogeneous_point)
+            vertices[i] = pgl.Vector3(transformed_point[:3])
+        scene[node.mesh].geometry.pointList = vertices
+            
+    for child in node.children:
+        transform_all(gltf.nodes[child], matrix, scene, gltf)
 
 
 def to_gltf(points, triangles):
