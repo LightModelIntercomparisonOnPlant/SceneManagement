@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=61", "setuptools_scm[toml]>=7"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+write_to = "src/openalea/scenemanagement/_version.py"
+
+[project]
+name="openalea.scenemanagement"
+authors = [
+  { name = "Aurélien Besnier", email = "aurelien.besnier@inrae.fr" },
+  { name = "Christian Fournier", email = "christian.fournier@inrae.fr" },
+  { name = "Christophe Pradal", email = "christophe.pradal@cirad.fr" },
+]
+description="Scene converters from light models intercomparison"
+readme="README.md"
+requires-python=">=3.10"
+classifiers = [
+  "Development Status :: 1 - Planning",
+  "Intended Audience :: Science/Research",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering",
+]
+dynamic = ["version"]
+
+dependencies = [
+    "openalea.plantgl",
+    "numpy",
+    "pygltflib",
+]
+[project.optional-dependencies]
+test = [
+    "alinea.caribu"
+]
