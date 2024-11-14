@@ -27,7 +27,7 @@ class Project:
         """Parse a project file.
 
         Args:
-            file (str): file path of the project description
+            file (Path): file path of the project description
         """
         with open(file, encoding="UTF8") as f:
             data = json.load(f)

@@ -53,7 +53,7 @@ def to_mesh(shape):
 
 def unpack_string(component_type):
     """Returns the appropriate unpack string and size
-    depending on the component type of a gltf buffer.
+    depending on the component type of gltf buffer.
 
     Args:
         component_type (int): The type of component of the buffer.
@@ -83,6 +83,29 @@ def unpack_string(component_type):
             string = "<fff"
             size = 4
     return string, size
+
+def rotate_shape(scene, quaternion, mesh_id):
+    rotation = quaternion
+    x = rotation[0]
+    y = rotation[1]
+    z = rotation[2]
+    w = rotation[3]
+
+    sinr_cosp = 2 * (w * x + y * z)
+    cosr_cosp = 1 - 2 * (x * x + y * y)
+    roll = atan2(sinr_cosp, cosr_cosp)
+
+    sinp = sqrt(1 + 2 * (w * y - x * z))
+    cosp = sqrt(1 - 2 * (w * y - x * z))
+    pitch = 2 * atan2(sinp, cosp) - pi / 2
+
+    siny_cosp = 2 * (w * z + x * y)
+    cosy_cosp = 1 - 2 * (y * y + z * z)
+    yaw = atan2(siny_cosp, cosy_cosp)
+
+    scene[mesh_id] = pgl.Shape(
+        pgl.EulerRotated(roll, pitch, yaw, scene[mesh_id].geometry)
+    )
 
 
 def to_pgl(file, verbose=False) -> pgl.Scene:
@@ -158,29 +181,8 @@ def to_pgl(file, verbose=False) -> pgl.Scene:
                 # TODO: transform mesh.
                 print(node.matrix)
                 scene[node.mesh] = scene[node.mesh].transform(node.matrix)
-            if node.rotation:
-                rotation = node.rotation  # Quaternion
-                x = rotation[0]
-                y = rotation[1]
-                z = rotation[2]
-                w = rotation[3]
-
-                sinr_cosp = 2 * (w * x + y * z)
-                cosr_cosp = 1 - 2 * (x * x + y * y)
-                roll = atan2(sinr_cosp, cosr_cosp)
-
-                sinp = sqrt(1 + 2 * (w * y - x * z))
-                cosp = sqrt(1 - 2 * (w * y - x * z))
-                pitch = 2 * atan2(sinp, cosp) - pi / 2
-
-                siny_cosp = 2 * (w * z + x * y)
-                cosy_cosp = 1 - 2 * (y * y + z * z)
-                yaw = atan2(siny_cosp, cosy_cosp)
-
-                scene[node.mesh] = pgl.Shape(
-                    pgl.EulerRotated(roll, pitch, yaw, scene[node.mesh].geometry)
-                )
-
+            if node.rotation is not None:
+                rotate_shape(scene, node.rotation, node.mesh)
             if node.scale is not None:
                 scale = pgl.Vector3(node.scale)
                 scene[node.mesh] = pgl.Shape(
@@ -210,63 +212,6 @@ def transform_all(node, matrix, scene, gltf):
             
     for child in node.children:
         transform_all(gltf.nodes[child], matrix, scene, gltf)
-
-
-def to_gltf(points, triangles):
-    triangles_binary_blob = triangles.flatten().tobytes()
-    points_binary_blob = points.tobytes()
-    gltf = pygltflib.GLTF2(
-        scene=0,
-        scenes=[pygltflib.Scene(nodes=[0])],
-        nodes=[pygltflib.Node(mesh=0)],
-        meshes=[
-            pygltflib.Mesh(
-                primitives=[
-                    pygltflib.Primitive(
-                        attributes=pygltflib.Attributes(POSITION=1), indices=0
-                    )
-                ]
-            )
-        ],
-        accessors=[
-            pygltflib.Accessor(
-                bufferView=0,
-                componentType=pygltflib.UNSIGNED_BYTE,
-                count=triangles.size,
-                type=pygltflib.SCALAR,
-                max=[int(triangles.max())],
-                min=[int(triangles.min())],
-            ),
-            pygltflib.Accessor(
-                bufferView=1,
-                componentType=pygltflib.FLOAT,
-                count=len(points),
-                type=pygltflib.VEC3,
-                max=points.max(axis=0).tolist(),
-                min=points.min(axis=0).tolist(),
-            ),
-        ],
-        bufferViews=[
-            pygltflib.BufferView(
-                buffer=0,
-                byteLength=len(triangles_binary_blob),
-                target=pygltflib.ELEMENT_ARRAY_BUFFER,
-            ),
-            pygltflib.BufferView(
-                buffer=0,
-                byteOffset=len(triangles_binary_blob),
-                byteLength=len(points_binary_blob),
-                target=pygltflib.ARRAY_BUFFER,
-            ),
-        ],
-        buffers=[
-            pygltflib.Buffer(
-                byteLength=len(triangles_binary_blob) + len(points_binary_blob)
-            )
-        ],
-    )
-    gltf.set_binary_blob(triangles_binary_blob + points_binary_blob)
-    return gltf
 
 
 def to_gltf_file(gltf, filename="toto.gltf"):
