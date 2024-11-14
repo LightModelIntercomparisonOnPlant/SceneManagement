@@ -47,7 +47,7 @@ def as_scene_mesh(pgl_scene):
 def to_mesh(shape):
     points, triangles = shape_mesh(shape)
     points = np.array(points, dtype=np.float32)
-    triangles = np.array(triangles, dtype=np.uint8)
+    triangles = np.array(triangles, dtype=np.uint16)
     return points, triangles
 
 
@@ -284,7 +284,7 @@ class GLTFScene:
         triangle_access = pygltflib.Accessor(
             bufferView=2 * uids,
             byteOffset=0,
-            componentType=pygltflib.UNSIGNED_BYTE,
+            componentType=pygltflib.UNSIGNED_SHORT,
             count=triangles.size,
             type=pygltflib.SCALAR,
             max=[int(triangles.max())],
