@@ -15,6 +15,8 @@ class Model:
     def run(self):
         pass
 
+    def display(self):
+        pass
 
 class CaribuModel(Model):
     def __init__(self):
@@ -38,6 +40,9 @@ class CaribuModel(Model):
     @property
     def values(self):
         return self._values
+
+    def display(self):
+        return PlantGL(self.scene, group_by_color=False, property=self._values)
 
 
 
@@ -102,10 +107,6 @@ class Scene:
         Returns:
             list: the caribu result
         """
-        materials = self.project.spectral_properties['materials']
-        mapping = self.project.spectral_properties['mapping']
-        print(materials)
-        print(mapping)
         for model in self.models:
             model.scene = self.sc
             model.run()
