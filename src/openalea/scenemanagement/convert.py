@@ -213,11 +213,6 @@ def transform_all(node, matrix, scene, gltf):
     for child in node.children:
         transform_all(gltf.nodes[child], matrix, scene, gltf)
 
-
-def to_gltf_file(gltf, filename="toto.gltf"):
-    gltf.save(filename)
-
-
 class GLTFScene:
     def __init__(self, scene):
         self.scene = scene
@@ -239,7 +234,7 @@ class GLTFScene:
                 self.populate(points, triangles, uids)
                 uids += 1
 
-    def to_gltf(self, filename):
+    def to_gltf(self, filename="toto.gltf"):
         if self._blobs:
             blobs = self._blobs[0]
             for b in self._blobs[1:]:
@@ -259,7 +254,7 @@ class GLTFScene:
 
         gltf.set_binary_blob(blobs)
 
-        to_gltf_file(gltf, filename=filename)
+        gltf.save(filename)
         return True
 
     def populate(self, points, triangles, uids):
