@@ -287,8 +287,6 @@ def transform_all(node, scene, gltf, matrix=None):
 
     global_matrix = global_matrix @ local_transform
 
-    print(global_matrix)
-
     if node.mesh is not None:
         vertices = scene[node.mesh].geometry.pointList
         for i in range(len(vertices)):
