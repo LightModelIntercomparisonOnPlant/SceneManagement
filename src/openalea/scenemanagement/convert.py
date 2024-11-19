@@ -84,6 +84,7 @@ def unpack_string(component_type):
             size = 4
     return string, size
 
+
 def rotate_shape(scene, quaternion, mesh_id):
     rotation = quaternion
     x = rotation[0]
@@ -172,46 +173,135 @@ def to_pgl(file, verbose=False) -> pgl.Scene:
         ts = pgl.TriangleSet(vertices, indices)
         sh = pgl.Shape(ts)
         scene.add(sh)
+    
 
-    matrix = np.zeros((4,4))
-    transform_all(gltf.nodes[0], matrix, scene, gltf)
-    for node in gltf.nodes:
-        if node.mesh is not None:
-            if node.matrix is not None:
-                # TODO: transform mesh.
-                print(node.matrix)
-                scene[node.mesh] = scene[node.mesh].transform(node.matrix)
-            if node.rotation is not None:
-                rotate_shape(scene, node.rotation, node.mesh)
-            if node.scale is not None:
-                scale = pgl.Vector3(node.scale)
-                scene[node.mesh] = pgl.Shape(
-                    pgl.Scaled(scale, scene[node.mesh].geometry)
-                )
-            if node.translation is not None:
-                translation = pgl.Vector3(node.translation)
-                scene[node.mesh] = pgl.Shape(
-                    pgl.Translated(translation, scene[node.mesh].geometry)
-                )
+    transform_all(gltf.nodes[0], scene, gltf)
 
     return scene
 
-def transform_all(node, matrix, scene, gltf):
-    if node.matrix is not None:
-        matrix += np.array(node.matrix).reshape(4,4)
 
-    if node.mesh is not None and np.count_nonzero(matrix) > 0 :
+def get_rotation(node):
+    """Gets the rotation of a node as a transformation matrix.
+
+    Args:
+        node (Node): The node to get the matrix from.
+
+    Returns:
+        np.array: The transform matrix as an numpy array.
+    """
+    local_rotation = [0,0,0,1]
+    if node.rotation is not None:
+        local_rotation = node.rotation
+
+    x, y, z, w = local_rotation
+
+    # Calculate the rotation matrix elements
+    R = np.array(
+        [
+            [
+                1 - 2 * y * y - 2 * z * z,
+                2 * x * y + 2 * w * z,
+                2 * x * z - 2 * w * y,
+                0.0,
+            ],
+            [
+                2 * x * y - 2 * w * z,
+                1 - 2 * x * x - 2 * z * z,
+                2 * y * z + 2 * w * x,
+                0.0,
+            ],
+            [
+                2 * x * z + 2 * w * y,
+                2 * y * z - 2 * w * x,
+                1 - 2 * x * x - 2 * y * y,
+                0.0,
+            ],
+            [0.0, 0.0, 0.0, 1.0],
+        ]
+    )
+
+    return R
+
+
+def get_scale(node):
+    """Gets the scale of a node as a transformation matrix.
+
+    Args:
+        node (Node): The node to get the matrix from.
+
+    Returns:
+        np.array: The transform matrix as an numpy array.
+    """
+    # Get the node's local scale vector
+    local_scale = np.ones(3)
+    if node.scale is not None:
+        local_scale = node.scale
+
+    scale = np.identity(4)
+    scale[0, 0] = local_scale[0]
+    scale[1, 1] = local_scale[1]
+    scale[2, 2] = local_scale[2]
+
+    return scale
+
+
+def get_translation(node):
+    """Gets the translation of a node as a transformation matrix.
+
+    Args:
+        node (Node): The node
+
+    Returns:
+        np.array: The transform matrix as an numpy array.
+    """
+    # Get the node's local translation vector
+    local_translation = np.zeros(3)
+    if node.translation is not None:
+        local_translation = node.translation
+
+    translation = np.identity(4)
+    translation[0, 3] = local_translation[0]
+    translation[1, 3] = local_translation[1]
+    translation[2, 3] = local_translation[2]
+
+    return translation
+
+
+def transform_all(node, scene, gltf, matrix=None):
+    if matrix is None:
+        matrix = np.eye(4)
+
+    # Get the node's local transformation matrix
+    local_matrix = np.eye(4)
+    if node.matrix is not None:
+        local_matrix = np.array(node.matrix).reshape(4, 4).T
+
+    # Accumulate the transformation matrices
+    global_matrix = matrix @ local_matrix
+
+    local_translation = get_translation(node)
+    local_rotation = get_rotation(node)
+    local_scale = get_scale(node)
+
+    local_transform = local_translation @ local_rotation @ local_scale
+
+    global_matrix = global_matrix @ local_transform
+
+    print(global_matrix)
+
+    if node.mesh is not None:
         vertices = scene[node.mesh].geometry.pointList
         for i in range(len(vertices)):
             vertex = vertices[i]
             homogeneous_point = np.array([vertex[0], vertex[1], vertex[2], 1])
 
-            transformed_point = np.dot(matrix, homogeneous_point)
+            transformed_point = np.dot(global_matrix, homogeneous_point)
             vertices[i] = pgl.Vector3(transformed_point[:3])
         scene[node.mesh].geometry.pointList = vertices
-            
+
     for child in node.children:
-        transform_all(gltf.nodes[child], matrix, scene, gltf)
+        transform_all(gltf.nodes[child], scene, gltf, global_matrix)
+
 
 class GLTFScene:
     def __init__(self, scene):

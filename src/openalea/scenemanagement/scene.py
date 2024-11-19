@@ -8,6 +8,7 @@ from openalea.scenemanagement.project import Project
 from oawidgets.plantgl import PlantGL
 from alinea.caribu.CaribuScene import CaribuScene
 
+
 class Model:
     def __init__(self):
         pass
@@ -18,6 +19,7 @@ class Model:
     def display(self):
         pass
 
+
 class CaribuModel(Model):
     def __init__(self):
         super().__init__()
@@ -26,8 +28,7 @@ class CaribuModel(Model):
         self._values = None
 
     def run(self):
-        """Run Caribu on the scene.
-        """
+        """Run Caribu on the scene."""
         cscene = CaribuScene(self.scene, scene_unit="m")
         raw, _ = cscene.run(direct=True, simplify=True)
         _, values = cscene.plot(raw["Eabs"], display=False)
@@ -45,7 +46,6 @@ class CaribuModel(Model):
         return PlantGL(self.scene, group_by_color=False, property=self._values)
 
 
-
 class Scene:
     def __init__(self, file: Path):
         self.file: Path = Path(file)
@@ -57,7 +57,6 @@ class Scene:
         self.environment = None
         self.sensors = None
         self._parse_scene_file()
-
 
     def add_model(self, model):
         """Add a light model for the scene.
@@ -110,7 +109,6 @@ class Scene:
         for model in self.models:
             model.scene = self.sc
             model.run()
-
 
     def display(self):
         """Displays the scene.
