@@ -1,49 +1,10 @@
 from pathlib import Path
 
-import numpy as np
 import openalea.plantgl.all as pgl
 
 from openalea.scenemanagement.convert import to_pgl, GLTFScene
 from openalea.scenemanagement.project import Project
 from oawidgets.plantgl import PlantGL
-from alinea.caribu.CaribuScene import CaribuScene
-
-
-class Model:
-    def __init__(self):
-        pass
-
-    def run(self):
-        pass
-
-    def display(self):
-        pass
-
-
-class CaribuModel(Model):
-    def __init__(self):
-        super().__init__()
-        self.scene = None
-        self.options = None
-        self._values = None
-
-    def run(self):
-        """Run Caribu on the scene."""
-        cscene = CaribuScene(self.scene, scene_unit="m")
-        raw, _ = cscene.run(direct=True, simplify=True)
-        _, values = cscene.plot(raw["Eabs"], display=False)
-
-        v99 = np.percentile(values, 99)
-        nvalues = np.array(values)
-        nvalues[nvalues > v99] = v99
-        self._values = nvalues.tolist()
-
-    @property
-    def values(self):
-        return self._values
-
-    def display(self):
-        return PlantGL(self.scene, group_by_color=False, property=self._values)
 
 
 class Scene:
