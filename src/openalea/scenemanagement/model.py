@@ -1,6 +1,7 @@
 from alinea.caribu.CaribuScene import CaribuScene
-from openalea.photonmap.simulator import Simulator
-from openalea.photonmap import Vec3
+from openalea.spice.simulator import Simulator
+from openalea.spice.common.convert import pgl_to_spice
+from openalea.spice import Vec3
 from openalea.plantgl.all import *
 from oawidgets.plantgl import PlantGL
 import numpy as np
@@ -41,7 +42,7 @@ class CaribuModel(Model):
     def display(self):
         return PlantGL(self.scene, group_by_color=False, property=self._values)
 
-class PhmapModel(Model):
+class SpiceModel(Model):
     def __init__(self):
         super().__init__()
         self.simulator = None
@@ -50,21 +51,23 @@ class PhmapModel(Model):
         
     def run(self):
         self.simulator = Simulator()
-        self.simulator.nb_photons = 100000
-        self.simulator.max_depth = 5
-        self.simulator.nb_thread = 4
-        self.simulator.resetScene()
+        self.simulator.configuration.NB_PHOTONS = int(1e6)
+        self.simulator.configuration.SCALE_FACTOR = 1
+        self.simulator.configuration.MAXIMUM_DEPTH = 5
+        self.simulator.configuration.T_MIN = 0.01
+        self.simulator.configuration.BACKFACE_CULLING = False
+        self.simulator.configuration.RENDERING = True
 
-        for sh in self.scene:
-            self.simulator.addFaceSensor(sh)
+        sp_scene = pgl_to_spice(self.scene)
+        self.simulator.scene_pgl = self.scene
+        self.simulator.scene = sp_scene
 
-        
         self.simulator.addPointLight(Vec3(0,0,12), 1000, Vec3(1,1,1))
-
-        # self.simulator.addSpotLight(Vec3(0,0,12), 10000, Vec3(0,0,-1), 
-        #                60, Vec3(1,1,1))
 
         self.simulator.run()
 
-    def display(self):
-        return self.simulator.visualizeResults('oawidgets')
+    def display(self, mode="mesh"):
+        if mode == "mesh":
+            return self.simulator.visualizeResults('oawidgets')
+        if mode == "photon":
+            return self.simulator.visualizePhotons('oawidgets')
