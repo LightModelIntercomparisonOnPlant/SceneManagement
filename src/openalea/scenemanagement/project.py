@@ -10,10 +10,10 @@ class Project:
     """Class containing all data for a light simulation project."""
 
     description: str = ""
-    plant_architecture: list[str] = None
-    background: list[str] = None
+    objects = None
     sensors: list[str] = None
     scale: list[str] = None
+    instances: list[object] = None
     spectral_band: dict = None
     spectral_properties: dict = None
     illumination: dict = None
@@ -31,11 +31,9 @@ class Project:
         """
         with open(file, encoding="UTF8") as f:
             data = json.load(f)
-        self.description = data["Description"]
-        self.plant_architecture = data["Plant_Architecture"]
-        self.background = data["Background"]
-        self.sensors = data["Sensors"]
-        self.scale = data["Scale"]
+        self.description = data["description"]
+        self.objects = data["objects"]
+        self.instances = data["instances"]
         self.spectral_band = data["Spectral_Band"]
         self.spectral_properties = data["Spectral_Properties"]
         self.illumination = data["Illumination"]

@@ -1,19 +1,103 @@
 {
-   "Description":"some text to describe the model",
-   "Plant_Architecture":[
-      "large_tree.gltf",
-      "plant2.gltf"
-   ],
-   "Background":[
-      "soil.gltf"
-   ],
-   "Sensors":[
-      "sensors.gltf"
-   ],
-   "Scale":[
-      "scale_plant1.csv",
-      "scale_plant2.csv"
-   ],
+   "description":"some text to describe the model",
+   "objects": {
+     "plant1": {
+       "architecture": "../models/plants/large_tree.gltf",
+       "scalesFile": "ltScale.csv",
+       "materials": {
+         "stem": {
+           "type": "Lambertian",
+           "data": [
+             0.2,
+             0.01,
+             0.91
+           ],
+           "mapped": [
+             0,
+             2
+           ]
+         },
+         "leaf": {
+           "type": "Lambertian",
+           "file": "complex_leaf_scatering_indicatrix_PAR.bsdf",
+           "mapped": [
+             1,
+             3,
+             4
+           ]
+         }
+       }
+     },
+     "ground": {
+       "architecture": "../models/environments/soil.gltf",
+       "scales": {
+         "0": "0",
+         "1": "0"
+       },
+       "materials": {
+         "soil": {
+           "type": "RGB",
+           "data": [
+             0.8,
+             0.6,
+             0.7
+           ],
+           "mapped": [
+             0
+           ]
+         }
+       }
+     },
+     "ledLamp": {
+       "architecture": "$SPOTLIGHT",
+       "ies": "led.ies"
+     },
+     "plantSensor": {
+       "architecture": "$SENSOR",
+       "size": 1.4
+     }
+   },
+   "instances":[
+        {
+            "object":"ground",
+            "position":[0,0,0],
+            "label":"floor"
+        },
+        {
+            "object":"plant1",
+            "position":[0,6,0],
+            "label":"tree_a",
+            "scaling":1.4
+        },
+        {
+            "object":"plant1",
+            "position":[0,-4,0],
+            "label":"tree_b",
+            "scaling":1.2,
+            "rotation":175
+        },
+        {
+            "object":"plant1",
+            "position":[1,0,0],
+            "label":"tree_c",
+            "scaling":0.4,
+            "rotation":75
+        },
+        {
+            "object":"ledLamp",
+            "position":[0,10,40],
+            "orientation":[0,-0.5,-1]
+        },
+        {
+            "object":"ledLamp",
+            "position":[0,-10,40],
+            "orientation":[0,0.5,-1]
+        },
+        {
+            "object":"plantSensor",
+            "position":[0,1.5,0.5]
+        }
+    ],
    "Spectral_Band":{
       "PAR":[
          400,

@@ -1,3 +1,4 @@
+import os.path
 from pathlib import Path
 
 import openalea.plantgl.all as pgl
@@ -42,7 +43,7 @@ class Scene:
             file (str): the gltf file to add.
         """
         scene = to_pgl(file)
-        self.sc += scene
+        return scene
 
     def save(self, filename):
         """Saves the scene as a gltf file.
@@ -56,10 +57,27 @@ class Scene:
     def _parse_scene_file(self):
         """Parse the scene file and initialize all parameters."""
         self.project = Project(self.file)
-        for plant in self.project.plant_architecture:
-            self.read_gltf(plant)
-        for background in self.project.background:
-            self.read_gltf(background)
+        # for plant in self.project.plants:
+        #     archi = plant['architecture']
+        #     self.read_gltf(archi)
+        # for env in self.project.environment:
+        #     archi = env['architecture']
+        #     self.read_gltf(archi)
+
+        for instance in self.project.instances:
+            obj = self.project.objects[instance['object']]
+            archi = obj['architecture']
+            pos = instance['position']
+            if os.path.exists(archi):
+                sc = self.read_gltf(archi)
+                for sh in sc:
+                    sh.geometry = pgl.Translated(pgl.Vector3(pos[0],pos[1],pos[2]),
+                                        sh.geometry)
+                self.sc.add(sc)
+            elif archi.startswith("$"):
+                # TODO: Find a common way to add those objects.
+                pass
+
 
     def run(self):
         """Run caribu on the scene with the previous scene information.
