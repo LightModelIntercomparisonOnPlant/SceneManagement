@@ -56,7 +56,7 @@ class SpiceModel(Model):
         self.simulator.configuration.MAXIMUM_DEPTH = 5
         self.simulator.configuration.T_MIN = 0.01
         self.simulator.configuration.BACKFACE_CULLING = False
-        self.simulator.configuration.RENDERING = True
+        self.simulator.configuration.KEEP_ALL = True
 
         sp_scene = pgl_to_spice(self.scene)
         self.simulator.scene_pgl = self.scene
