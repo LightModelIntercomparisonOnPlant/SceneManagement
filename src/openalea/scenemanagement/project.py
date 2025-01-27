@@ -13,7 +13,7 @@ class Project:
     objects = None
     sensors: list[str] = None
     scale: list[str] = None
-    instances: list[object] = None
+    scene: list[object] = None
     spectral_band: dict = None
     spectral_properties: dict = None
     illumination: dict = None
@@ -33,7 +33,7 @@ class Project:
             data = json.load(f)
         self.description = data["description"]
         self.objects = data["objects"]
-        self.instances = data["instances"]
+        self.scene = data["scene"]
         self.spectral_band = data["Spectral_Band"]
         self.spectral_properties = data["Spectral_Properties"]
         self.illumination = data["Illumination"]

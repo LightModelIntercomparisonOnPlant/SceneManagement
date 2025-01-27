@@ -36,8 +36,9 @@ class Scene:
         """
         self.models += models
 
-    def read_gltf(self, file):
-        """Reads a gltf file and adds it to the scene.
+    @staticmethod
+    def read_gltf(file):
+        """Reads a gltf file and returns it as a plantgl Scene.
 
         Args:
             file (str): the gltf file to add.
@@ -57,27 +58,32 @@ class Scene:
     def _parse_scene_file(self):
         """Parse the scene file and initialize all parameters."""
         self.project = Project(self.file)
-        # for plant in self.project.plants:
-        #     archi = plant['architecture']
-        #     self.read_gltf(archi)
-        # for env in self.project.environment:
-        #     archi = env['architecture']
-        #     self.read_gltf(archi)
 
-        for instance in self.project.instances:
-            obj = self.project.objects[instance['object']]
-            archi = obj['architecture']
-            pos = instance['position']
+        for instance in self.project.scene:
+            obj = self.project.objects[instance["object"]]
+            archi = obj["architecture"]
+            pos = instance["position"]
+            scaling = instance["scaling"] if "scaling" in instance else None
+            rotation = instance["rotation"] if "rotation" in instance else None
+            orientation = instance["orientation"] if "orientation" in instance else None
             if os.path.exists(archi):
                 sc = self.read_gltf(archi)
                 for sh in sc:
-                    sh.geometry = pgl.Translated(pgl.Vector3(pos[0],pos[1],pos[2]),
-                                        sh.geometry)
+                    sh.geometry = pgl.Translated(
+                        pgl.Vector3(pos[0], pos[1], pos[2]), sh.geometry
+                    )
+                    if scaling is not None:
+                        sh.geometry = pgl.Scaled(
+                            pgl.Vector3(scaling, scaling, scaling), sh.geometry
+                        )
+                    if rotation is not None:
+                        sh.geometry = pgl.AxisRotated(
+                            pgl.Vector3(0, 0, 1), rotation, sh.geometry
+                        )
                 self.sc.add(sc)
             elif archi.startswith("$"):
                 # TODO: Find a common way to add those objects.
                 pass
-
 
     def run(self):
         """Run caribu on the scene with the previous scene information.

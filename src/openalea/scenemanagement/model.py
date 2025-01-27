@@ -1,10 +1,10 @@
-from alinea.caribu.CaribuScene import CaribuScene
-from openalea.spice.simulator import Simulator
-from openalea.spice.common.convert import pgl_to_spice
-from openalea.spice import Vec3
-from openalea.plantgl.all import *
-from oawidgets.plantgl import PlantGL
 import numpy as np
+from alinea.caribu.CaribuScene import CaribuScene
+from oawidgets.plantgl import PlantGL
+from openalea.spice import Vec3
+from openalea.spice.common.convert import pgl_to_spice
+from openalea.spice.simulator import Simulator
+
 
 class Model:
     def __init__(self):
@@ -26,14 +26,10 @@ class CaribuModel(Model):
 
     def run(self):
         """Run Caribu on the scene."""
-        cscene = CaribuScene(self.scene, scene_unit="m")
+        cscene = CaribuScene(self.scene)
         raw, _ = cscene.run(direct=True, simplify=True)
-        _, values = cscene.plot(raw["Eabs"], display=False)
-
-        v99 = np.percentile(values, 99)
-        nvalues = np.array(values)
-        nvalues[nvalues > v99] = v99
-        self._values = nvalues.tolist()
+        _, values = cscene.plot(raw["Ei"], display=False)
+        self._values = values
 
     @property
     def values(self):
@@ -42,13 +38,14 @@ class CaribuModel(Model):
     def display(self):
         return PlantGL(self.scene, group_by_color=False, property=self._values)
 
+
 class SpiceModel(Model):
     def __init__(self):
         super().__init__()
         self.simulator = None
         self.scene = None
         self.options = None
-        
+
     def run(self):
         self.simulator = Simulator()
         self.simulator.configuration.NB_PHOTONS = int(1e6)
@@ -62,12 +59,12 @@ class SpiceModel(Model):
         self.simulator.scene_pgl = self.scene
         self.simulator.scene = sp_scene
 
-        self.simulator.addPointLight(Vec3(0,0,12), 1000, Vec3(1,1,1))
+        self.simulator.addPointLight(Vec3(0, 0, 12), 1000, Vec3(1, 1, 1))
 
         self.simulator.run()
 
     def display(self, mode="mesh"):
         if mode == "mesh":
-            return self.simulator.visualizeResults('oawidgets')
+            return self.simulator.visualizeResults("oawidgets")
         if mode == "photon":
-            return self.simulator.visualizePhotons('oawidgets')
+            return self.simulator.visualizePhotons("oawidgets")

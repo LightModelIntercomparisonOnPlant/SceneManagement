@@ -173,7 +173,6 @@ def to_pgl(file, verbose=False) -> pgl.Scene:
         ts = pgl.TriangleSet(vertices, indices)
         sh = pgl.Shape(ts)
         scene.add(sh)
-    
 
     transform_all(gltf.nodes[0], scene, gltf)
 
@@ -189,7 +188,7 @@ def get_rotation(node):
     Returns:
         np.array: The transform matrix as an numpy array.
     """
-    local_rotation = [0,0,0,1]
+    local_rotation = [0, 0, 0, 1]
     if node.rotation is not None:
         local_rotation = node.rotation
 

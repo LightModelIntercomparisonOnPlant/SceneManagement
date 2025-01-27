@@ -57,7 +57,7 @@
        "size": 1.4
      }
    },
-   "instances":[
+   "scene":[
         {
             "object":"ground",
             "position":[0,0,0],
