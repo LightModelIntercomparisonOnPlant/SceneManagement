@@ -6,7 +6,35 @@ from functools import reduce
 import numpy as np
 import pygltflib
 from openalea.plantgl import all as pgl
+import polars as pl
 
+import colour  # package colour-science
+from colour import SpectralDistribution, sd_to_XYZ, XYZ_to_RGB
+from colour.models import RGB_COLOURSPACE_sRGB
+
+def spec2RGB(spec_file, separator=','):
+    df = pl.read_csv(spec_file, separator=separator)
+    plot = df.plot.line(x='lambda', y='mean')
+    plot.save('test.html')
+    i = 1
+    wavelengths = []
+    reflectances = []
+
+    for row in df.iter_rows(named=True):
+        w = row['lambda']
+        mean = row['mean']
+        wavelengths.append(w)
+        reflectances.append(mean)
+    sd = SpectralDistribution(reflectances, wavelengths)
+    colour.plotting.plot_single_sd(sd)
+    xyz = sd_to_XYZ(sd, illuminant=colour.SDS_ILLUMINANTS["D65"]) / 100
+
+    rgb = XYZ_to_RGB(xyz, colourspace=RGB_COLOURSPACE_sRGB)
+    gamma = 1.0 / 2.2
+    rgb = [pow(col, gamma) * 255 for col in rgb]
+
+    print(f'final color: {rgb[0]}, {rgb[1]}, {rgb[2]}')
+    return rgb
 
 def shape_mesh(pgl_object, tesselator=None):
     if tesselator is None:
