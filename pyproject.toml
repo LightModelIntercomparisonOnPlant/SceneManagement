@@ -34,6 +34,8 @@ dependencies = [
     "openalea.plantgl",
     "numpy",
     "pygltflib",
+    "polars",
+    "colour-science"
 ]
 [project.optional-dependencies]
 test = [
